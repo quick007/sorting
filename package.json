@@ -7,12 +7,30 @@
     "dev": "vp dev",
     "build": "tsc && vp build",
     "preview": "vp preview",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "workers:dev": "vp build && wrangler dev",
+    "workers:dry-run": "vp build && wrangler deploy --dry-run",
+    "workers:deploy": "vp build && wrangler deploy"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@rolldown/plugin-babel": "^0.2.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest"
+    "vite-plus": "latest",
+    "wrangler": "latest"
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
