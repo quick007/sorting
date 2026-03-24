@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { type Algorithm, type SortStep } from "../algorithms.ts";
@@ -6,6 +6,14 @@ import { type Algorithm, type SortStep } from "../algorithms.ts";
 const BAR_COUNT = 12;
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+interface CardState {
+  baseArray: number[];
+  displayStep: SortStep | null;
+  status: string;
+  thinkingLines: string[];
+  isSorting: boolean;
+}
 
 function shuffleArray(length: number): number[] {
   const array = Array.from({ length }, (_, index) => index + 1);
@@ -34,79 +42,89 @@ function getBarClass(index: number, step: SortStep): string {
   );
 }
 
+function createCardState(baseArray = shuffleArray(BAR_COUNT)): CardState {
+  return {
+    baseArray,
+    displayStep: null,
+    status: "",
+    thinkingLines: [],
+    isSorting: false,
+  };
+}
+
 export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
-  const [cardState, setCardState] = useState(() => {
-    const initialArray = shuffleArray(BAR_COUNT);
-
-    return {
-      baseArray: initialArray,
-      displayStep: { array: initialArray } satisfies SortStep,
-      status: "",
-      thinkingLines: [] as string[],
-      isSorting: false,
-    };
-  });
-  const runIdRef = useRef(0);
-  const baseArrayRef = useRef(cardState.baseArray);
-  const thinkingLineCountRef = useRef(0);
+  const [cardState, setCardState] = useState<CardState>(() => createCardState());
+  const sectionRef = useRef<HTMLElement | null>(null);
   const thinkingRef = useRef<HTMLDivElement | null>(null);
+  const runIdRef = useRef(0);
 
-  useEffect(() => {
-    return () => {
-      runIdRef.current += 1;
-    };
-  }, []);
+  function isRunActive(runId: number): boolean {
+    return runIdRef.current === runId && sectionRef.current !== null;
+  }
 
-  useEffect(() => {
-    const thinkingElement = thinkingRef.current;
-    if (thinkingElement) {
-      thinkingElement.scrollTop = thinkingElement.scrollHeight;
+  function scrollThinkingToBottom(): void {
+    if (!thinkingRef.current) {
+      return;
     }
-  }, []);
+
+    requestAnimationFrame(() => {
+      const thinkingElement = thinkingRef.current;
+      if (thinkingElement) {
+        thinkingElement.scrollTop = thinkingElement.scrollHeight;
+      }
+    });
+  }
 
   async function typeThinking(text: string, runId: number): Promise<void> {
-    const lineIndex = thinkingLineCountRef.current;
-    thinkingLineCountRef.current += 1;
+    let lineIndex = -1;
 
-    setCardState((previous) => ({
-      ...previous,
-      thinkingLines: [...previous.thinkingLines, "> "],
-    }));
+    setCardState((previous) => {
+      lineIndex = previous.thinkingLines.length;
+      return {
+        ...previous,
+        thinkingLines: [...previous.thinkingLines, "> "],
+      };
+    });
+    scrollThinkingToBottom();
 
     let currentLine = "> ";
 
     for (const char of text) {
-      if (runIdRef.current !== runId) {
+      if (!isRunActive(runId)) {
         return;
       }
 
       currentLine += char;
-      setCardState((previous) => ({
-        ...previous,
-        thinkingLines: previous.thinkingLines.map((line, index) =>
-          index === lineIndex ? currentLine : line,
-        ),
-      }));
+      setCardState((previous) => {
+        const thinkingLines = [...previous.thinkingLines];
+        thinkingLines[lineIndex] = currentLine;
+
+        return {
+          ...previous,
+          thinkingLines,
+        };
+      });
+      scrollThinkingToBottom();
       await wait(12);
     }
   }
 
   async function runSort(): Promise<void> {
+    const baseArray = cardState.baseArray;
     const runId = runIdRef.current + 1;
     runIdRef.current = runId;
-    thinkingLineCountRef.current = 0;
 
     setCardState((previous) => ({
       ...previous,
-      displayStep: { array: previous.baseArray },
+      displayStep: { array: baseArray },
       status: "",
       thinkingLines: [],
       isSorting: true,
     }));
 
     try {
-      for await (const step of algorithm.sort([...baseArrayRef.current])) {
-        if (runIdRef.current !== runId) {
+      for await (const step of algorithm.sort([...baseArray])) {
+        if (!isRunActive(runId)) {
           return;
         }
 
@@ -120,7 +138,7 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
           await typeThinking(step.thinking, runId);
         }
 
-        if (runIdRef.current !== runId) {
+        if (!isRunActive(runId)) {
           return;
         }
 
@@ -130,8 +148,14 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
       }
     } catch (error) {
       console.error(`Sort error (${algorithm.id}):`, error);
+      if (isRunActive(runId)) {
+        setCardState((previous) => ({
+          ...previous,
+          status: "sorting failed. check the console for details.",
+        }));
+      }
     } finally {
-      if (runIdRef.current === runId) {
+      if (isRunActive(runId)) {
         setCardState((previous) => ({
           ...previous,
           isSorting: false,
@@ -142,24 +166,15 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
 
   function shuffle(): void {
     const nextArray = shuffleArray(BAR_COUNT);
-
     runIdRef.current += 1;
-    thinkingLineCountRef.current = 0;
-    baseArrayRef.current = nextArray;
-
-    setCardState({
-      baseArray: nextArray,
-      displayStep: { array: nextArray },
-      status: "",
-      thinkingLines: [],
-      isSorting: false,
-    });
+    setCardState(createCardState(nextArray));
   }
 
   const hasThinking = algorithm.id === "agentic";
+  const displayStep = cardState.displayStep ?? { array: cardState.baseArray };
 
   return (
-    <section className="w-full max-w-md mx-auto" data-algo={algorithm.id}>
+    <section ref={sectionRef} className="w-full max-w-md mx-auto" data-algo={algorithm.id}>
       <h2 className="text-xl font-bold text-white lowercase tracking-tight text-center mb-1">
         {algorithm.name}
       </h2>
@@ -176,6 +191,7 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
       {hasThinking && cardState.thinkingLines.length > 0 ? (
         <div
           ref={thinkingRef}
+          data-thinking
           className="text-[10px] leading-[1.6] text-neutral-500 bg-neutral-900 border border-neutral-800 rounded-lg p-3 mb-6 max-h-[80px] overflow-y-auto"
         >
           {cardState.thinkingLines.map((line, index) => (
@@ -187,10 +203,10 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
       ) : null}
 
       <div className="flex items-end justify-center gap-1.5 h-[200px] mb-4">
-        {cardState.displayStep.array.map((value, index) => (
+        {displayStep.array.map((value, index) => (
           <div
-            key={`${algorithm.id}-${index}-${value}`}
-            className={getBarClass(index, cardState.displayStep)}
+            key={`${algorithm.id}-${index}`}
+            className={getBarClass(index, displayStep)}
             style={{ height: `${value <= 0 ? 0 : (value / BAR_COUNT) * 100}%` }}
           />
         ))}
