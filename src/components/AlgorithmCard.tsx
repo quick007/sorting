@@ -52,6 +52,21 @@ function createCardState(baseArray = shuffleArray(BAR_COUNT)): CardState {
   };
 }
 
+function ComplexityChip({ label, value, href }: { label: string; value: string; href?: string }) {
+  const content = `${label}: ${value}`;
+  const className = "text-xs text-neutral-600 bg-neutral-800/60 font-bold px-2.5 py-1 rounded-lg";
+
+  if (!href) {
+    return <span className={className}>{content}</span>;
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={cn(className, "inline-block")}>
+      {content}
+    </a>
+  );
+}
+
 export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
   const [cardState, setCardState] = useState<CardState>(() => createCardState());
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -180,12 +195,16 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
       </h2>
       <p className="text-center text-neutral-500 text-sm mb-3">{algorithm.tagline}</p>
       <div className="flex justify-center gap-2 mb-8">
-        <span className="text-xs text-neutral-600 bg-neutral-800/60 font-bold px-2.5 py-1 rounded-lg">
-          time: {algorithm.timeComplexity}
-        </span>
-        <span className="text-xs text-neutral-600 bg-neutral-800/60 font-bold px-2.5 py-1 rounded-lg">
-          space: {algorithm.spaceComplexity}
-        </span>
+        <ComplexityChip
+          label="time"
+          value={algorithm.timeComplexity}
+          href={algorithm.timeComplexityUrl}
+        />
+        <ComplexityChip
+          label="space"
+          value={algorithm.spaceComplexity}
+          href={algorithm.spaceComplexityUrl}
+        />
       </div>
 
       {hasThinking && cardState.thinkingLines.length > 0 ? (

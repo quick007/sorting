@@ -13,7 +13,9 @@ export interface Algorithm {
   name: string;
   tagline: string;
   timeComplexity: string;
+  timeComplexityUrl?: string;
   spaceComplexity: string;
+  spaceComplexityUrl?: string;
   sort(array: number[]): AsyncGenerator<SortStep, void, undefined>;
 }
 
@@ -90,7 +92,8 @@ export const algorithms: Algorithm[] = [
     id: "schizo",
     name: "Schizo Sort",
     tagline: "Disregard input. Generate new reality.",
-    timeComplexity: "O(n)",
+    timeComplexity: "O(0)",
+    timeComplexityUrl: "https://www.reddit.com/r/ProgrammerHumor/comments/1gsjs9m/comment/lxetl3l/",
     spaceComplexity: "O(n)",
     async *sort(arr) {
       const array = [...arr];
@@ -128,6 +131,7 @@ export const algorithms: Algorithm[] = [
     tagline: "Check if sorted. Pray. Repeat. (not ECC-safe)",
     timeComplexity: "O(\u221E)",
     spaceComplexity: "O(log n)",
+    spaceComplexityUrl: "https://x.com/witchof0x20/status/2036195180173217801",
     async *sort(arr) {
       const array = [...arr];
       const maxAttempts = 40;

@@ -13,3 +13,13 @@ test("renders each sorting algorithm card", () => {
     expect(markup).toContain(algorithm.name);
   }
 });
+
+test("renders linked joke complexities", () => {
+  const markup = renderToStaticMarkup(<App />);
+
+  expect(markup).toContain("time: O(0)");
+  expect(markup).toContain(
+    'href="https://www.reddit.com/r/ProgrammerHumor/comments/1gsjs9m/comment/lxetl3l/"',
+  );
+  expect(markup).toContain('href="https://x.com/witchof0x20/status/2036195180173217801"');
+});
