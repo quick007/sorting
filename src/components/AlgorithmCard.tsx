@@ -187,11 +187,23 @@ export default function AlgorithmCard({ algorithm }: { algorithm: Algorithm }) {
 
   const hasThinking = algorithm.id === "agentic";
   const displayStep = cardState.displayStep ?? { array: cardState.baseArray };
+  const headingClassName = "text-xl font-bold text-white lowercase tracking-tight text-center mb-1";
 
   return (
     <section ref={sectionRef} className="w-full max-w-md mx-auto" data-algo={algorithm.id}>
-      <h2 className="text-xl font-bold text-white lowercase tracking-tight text-center mb-1">
-        {algorithm.name}
+      <h2 className={headingClassName}>
+        {algorithm.headingUrl ? (
+          <a
+            href={algorithm.headingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline"
+          >
+            {algorithm.name}
+          </a>
+        ) : (
+          algorithm.name
+        )}
       </h2>
       <p className="text-center text-neutral-500 text-sm mb-3">{algorithm.tagline}</p>
       <div className="flex justify-center gap-2 mb-8">

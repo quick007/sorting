@@ -23,3 +23,13 @@ test("renders linked joke complexities", () => {
   );
   expect(markup).toContain('href="https://x.com/witchof0x20/status/2036195180173217801"');
 });
+
+test("renders Trump Sort second with a linked heading", () => {
+  const markup = renderToStaticMarkup(<App />);
+
+  expect(algorithms[1]?.id).toBe("trump");
+  expect(algorithms[1]?.name).toBe("Trump Sort");
+  expect(markup).toContain(
+    'href="https://gantlaborde.medium.com/trump-sort-a-new-sorting-algorithm-b37b1133356a"',
+  );
+});

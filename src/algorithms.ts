@@ -11,6 +11,7 @@ export interface SortStep {
 export interface Algorithm {
   id: string;
   name: string;
+  headingUrl?: string;
   tagline: string;
   timeComplexity: string;
   timeComplexityUrl?: string;
@@ -83,6 +84,84 @@ export const algorithms: Algorithm[] = [
         array: survivorValues,
         sorted: survivorValues.map((_, i) => i),
         message: `done. ${eliminated.size} elements did not make it.`,
+        delay: 0,
+      };
+    },
+  },
+
+  {
+    id: "trump",
+    name: "Trump Sort",
+    headingUrl: "https://gantlaborde.medium.com/trump-sort-a-new-sorting-algorithm-b37b1133356a",
+    tagline: "Build the wall. Deport the out-of-order elements.",
+    timeComplexity: "O(tremendous)",
+    spaceComplexity: "O(1)",
+    async *sort(arr) {
+      const array = [...arr];
+      let wallIndex = 0;
+
+      yield {
+        array: [...array],
+        active: [wallIndex],
+        message: "establishing the initial wall...",
+        delay: 450,
+      };
+
+      for (let i = 1; i < array.length; i++) {
+        yield {
+          array: [...array],
+          active: [wallIndex, i],
+          sorted: Array.from({ length: wallIndex + 1 }, (_, index) => index),
+          message: `checking whether ${array[i]} clears the wall at ${array[wallIndex]}...`,
+          delay: 220,
+        };
+
+        if (array[i] >= array[wallIndex]) {
+          wallIndex = i;
+          yield {
+            array: [...array],
+            active: [wallIndex],
+            sorted: Array.from({ length: wallIndex + 1 }, (_, index) => index),
+            message: `${array[i]} made it through. the wall just got bigger.`,
+            delay: 260,
+          };
+          continue;
+        }
+
+        const deported = array[i];
+        array.splice(i, 1);
+        array.push(deported);
+
+        yield {
+          array: [...array],
+          active: [wallIndex],
+          sorted: Array.from({ length: wallIndex + 1 }, (_, index) => index),
+          eliminated: Array.from(
+            { length: array.length - wallIndex - 1 },
+            (_, offset) => wallIndex + 1 + offset,
+          ),
+          message: `${deported} got deported to the end of the array.`,
+          delay: 320,
+        };
+      }
+
+      const approved = array.slice(0, wallIndex + 1);
+
+      yield {
+        array: [...array],
+        sorted: Array.from({ length: wallIndex + 1 }, (_, index) => index),
+        eliminated: Array.from(
+          { length: array.length - wallIndex - 1 },
+          (_, offset) => wallIndex + 1 + offset,
+        ),
+        message: "the wall is complete. everything beyond it is being ignored.",
+        delay: 600,
+      };
+
+      yield {
+        array: approved,
+        sorted: approved.map((_, index) => index),
+        message: `done. kept ${approved.length} approved elements and forgot the rest.`,
         delay: 0,
       };
     },
